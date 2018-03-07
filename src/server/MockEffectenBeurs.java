@@ -3,10 +3,8 @@ package server;
 import shared.Fonds;
 import shared.IEffectenBeurs;
 import shared.IFonds;
+import sockets.ServerSocketConnection;
 
-import java.io.*;
-import java.net.ServerSocket;
-import java.net.Socket;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
@@ -17,13 +15,8 @@ public class MockEffectenBeurs extends UnicastRemoteObject implements IEffectenB
 
     private List<IFonds> fondsen;
     private final Random random = new Random();
-    private ServerSocket serverSocket = null;
-    private Socket clientSocket = null;
-    private OutputStream outputStream = null;
-    private InputStream inputStream = null;
+    private ServerSocketConnection serverSocketConnection = null;
     private final Timer updateTimer = new Timer();
-    private ObjectOutputStream objectOutputStream = null;
-    private ObjectInputStream objectInputStream = null;
 
     public MockEffectenBeurs() throws RemoteException {
 
@@ -69,67 +62,8 @@ public class MockEffectenBeurs extends UnicastRemoteObject implements IEffectenB
         }, 0, UPDATE_TIME);
     }
 
-    private boolean createSockets() {
-        boolean result = true;
-
-        try {
-            serverSocket = new ServerSocket(8189);
-        } catch (IOException e) {
-            System.err.println("Failed to create server socket.");
-            result = false;
-        }
-
-        if (result) {
-            try {
-                System.out.println("Waiting for incoming connection");
-                clientSocket = serverSocket.accept();
-            } catch (IOException e) {
-                System.err.println("Accept failed.");
-                result = false;
-            }
-        }
-
-        if (result) {
-            try {
-                outputStream = clientSocket.getOutputStream();
-            } catch (IOException e) {
-                System.err.println("Failed to create output stream.");
-                result = false;
-            }
-        }
-
-        if (result) {
-            try {
-                inputStream = clientSocket.getInputStream();
-            } catch (IOException e) {
-                System.err.println("Failed to create input stream.");
-                result = false;
-            }
-        }
-
-        if (result) {
-            try {
-                objectInputStream = new ObjectInputStream(inputStream);
-            } catch (IOException e) {
-                System.err.println("Failed to create object input stream.");
-                result = false;
-            }
-        }
-
-        if (result) {
-            try {
-                objectOutputStream = new ObjectOutputStream(outputStream);
-            } catch (IOException e) {
-                System.err.println("Failed to create object output stream.");
-                result = false;
-            }
-        }
-
-        if (result) {
-            System.out.println("createSockets completed successfully");
-        }
-
-        return result;
+    private void createSockets() {
+        serverSocketConnection = new ServerSocketConnection();
     }
 
     private void handleRequests() {
@@ -137,30 +71,16 @@ public class MockEffectenBeurs extends UnicastRemoteObject implements IEffectenB
         Object receivedCommand = null;
 
         while (handeRequests) {
-            try {
-                receivedCommand = objectInputStream.readObject();
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (ClassNotFoundException e) {
-                System.err.println("Unknown object type used.");
-            }
-
-            if (receivedCommand != null) {
-                if (receivedCommand.equals("getFondsen")) {
-                    try {
-                        System.out.println("getFondsen command received.");
-                        objectOutputStream.reset(); // Needed to stop caching!
-                        objectOutputStream.writeObject(fondsen);
-                        objectOutputStream.flush();
-
-                        System.out.println("Sent: " + fondsen.get(0).getKoers());
-                        System.out.println("Fondsen sent.");
-                    } catch (IOException e) {
-                        System.err.println("Unable to send fondsen.");
-                    }
+            receivedCommand = serverSocketConnection.readObject();
+            if ((receivedCommand != null) && receivedCommand.equals("getFondsen")) {
+                System.out.println("getFondsen command received.");
+                if (serverSocketConnection.writeObject(fondsen)) {
+                    System.out.println("Sent: " + fondsen.get(0).getKoers());
+                    System.out.println("Fondsen sent.");
+                } else {
+                    System.err.println("Unable to send fondsen.");
                 }
             }
         }
     }
-
 }

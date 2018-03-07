@@ -77,15 +77,6 @@ class BannerController extends UnicastRemoteObject {
 
         if (result) {
             try {
-                outputStream = socket.getOutputStream();
-            } catch (IOException e) {
-                System.err.println("Failed to create output stream.");
-                result = false;
-            }
-        }
-
-        if (result) {
-            try {
                 inputStream = socket.getInputStream();
             } catch (IOException e) {
                 System.err.println("Failed to create input stream.");
@@ -95,18 +86,27 @@ class BannerController extends UnicastRemoteObject {
 
         if (result) {
             try {
-                objectOutputStream = new ObjectOutputStream(outputStream);
+                objectInputStream = new ObjectInputStream(inputStream);
             } catch (IOException e) {
-                System.err.println("Failed to create object output stream.");
+                System.err.println("Failed to create object input stream.");
                 result = false;
             }
         }
 
         if (result) {
             try {
-                objectInputStream = new ObjectInputStream(inputStream);
+                outputStream = socket.getOutputStream();
             } catch (IOException e) {
-                System.err.println("Failed to create object input stream.");
+                System.err.println("Failed to create output stream.");
+                result = false;
+            }
+        }
+
+        if (result) {
+            try {
+                objectOutputStream = new ObjectOutputStream(outputStream);
+            } catch (IOException e) {
+                System.err.println("Failed to create object output stream.");
                 result = false;
             }
         }
