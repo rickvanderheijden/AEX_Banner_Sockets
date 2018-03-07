@@ -1,5 +1,7 @@
 package shared;
 
+import shared.interfaces.IFonds;
+
 public class Fonds implements IFonds {
 
     private final String naam;

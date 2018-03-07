@@ -1,6 +1,6 @@
 package client;
 
-import shared.IFonds;
+import shared.interfaces.IFonds;
 
 import java.io.*;
 import java.net.Socket;
@@ -35,10 +35,12 @@ class BannerController extends UnicastRemoteObject {
     }
 
     private void updateBanner() {
+        System.out.println("Update banner");
         List<IFonds> fondsen = null;
         String command = "getFondsen";
 
         try {
+            System.out.println("getFondsen command sent.");
             objectOutputStream.writeObject(command);
             objectOutputStream.flush();
             Object result = objectInputStream.readObject();
@@ -61,6 +63,7 @@ class BannerController extends UnicastRemoteObject {
                 fondsenString.append(DIVIDER);
             }
 
+            System.out.println("setKoersen");
             banner.setKoersen(fondsenString.toString());
         }
     }

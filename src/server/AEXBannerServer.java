@@ -1,6 +1,6 @@
 package server;
 
-import shared.IEffectenBeurs;
+import shared.interfaces.IEffectenBeurs;
 
 import java.rmi.RemoteException;
 

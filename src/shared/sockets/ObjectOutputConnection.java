@@ -1,4 +1,4 @@
-package sockets;
+package shared.sockets;
 
 import java.io.*;
 import java.net.Socket;
@@ -25,8 +25,6 @@ public class ObjectOutputConnection {
             }
         }
     }
-
-
 
     public boolean writeObject(Object object) {
         boolean result = true;

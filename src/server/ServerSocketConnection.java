@@ -1,6 +1,7 @@
-package sockets;
+package server;
 
-import shared.IFonds;
+import shared.sockets.ObjectInputConnection;
+import shared.sockets.ObjectOutputConnection;
 
 import java.io.*;
 import java.net.ServerSocket;
@@ -13,32 +14,22 @@ public class ServerSocketConnection {
     private ObjectInputConnection objectInputConnection = null;
 
     public ServerSocketConnection() {
-
-        boolean result = true;
-
         try {
             serverSocket = new ServerSocket(8189);
         } catch (IOException e) {
             System.err.println("Failed to create server socket.");
-            result = false;
         }
+    }
 
-        if (result) {
-            try {
-                System.out.println("Waiting for incoming connection");
-                clientSocket = serverSocket.accept();
-            } catch (IOException e) {
-                System.err.println("Accept failed.");
-                result = false;
-            }
-        }
-
-        objectOutputConnection = new ObjectOutputConnection(clientSocket);
-        objectInputConnection = new ObjectInputConnection(clientSocket);
-
-
-        if (result) {
-            System.out.println("Sockets completed successfully");
+    public void accept() {
+        try {
+            System.out.println("Waiting for incoming connection");
+            clientSocket = serverSocket.accept();
+            objectOutputConnection = new ObjectOutputConnection(clientSocket);
+            objectInputConnection = new ObjectInputConnection(clientSocket);
+            System.out.println("Accepted incoming connection");
+        } catch (IOException e) {
+            System.err.println("Accept failed.");
         }
     }
 

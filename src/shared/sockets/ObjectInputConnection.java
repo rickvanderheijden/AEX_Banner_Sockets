@@ -1,4 +1,4 @@
-package sockets;
+package shared.sockets;
 
 import java.io.IOException;
 import java.io.InputStream;

@@ -1,9 +1,8 @@
 package server;
 
 import shared.Fonds;
-import shared.IEffectenBeurs;
-import shared.IFonds;
-import sockets.ServerSocketConnection;
+import shared.interfaces.IEffectenBeurs;
+import shared.interfaces.IFonds;
 
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
@@ -32,7 +31,7 @@ public class MockEffectenBeurs extends UnicastRemoteObject implements IEffectenB
     }
 
     private void updateKoersen() {
-        System.out.println("Update koersen");
+        //System.out.println("Update koersen");
 
         for (IFonds fonds : fondsen) {
             boolean add = random.nextBoolean();
@@ -67,11 +66,26 @@ public class MockEffectenBeurs extends UnicastRemoteObject implements IEffectenB
     }
 
     private void handleRequests() {
-        boolean handeRequests = true;
-        Object receivedCommand = null;
+        boolean waitForConnection = true;
 
-        while (handeRequests) {
-            receivedCommand = serverSocketConnection.readObject();
+        while (waitForConnection) {
+            serverSocketConnection.accept();
+
+            Runnable task2 = () -> {
+                handleRequest();
+            };
+
+            Thread t = new Thread(task2);
+            t.start();
+        }
+    }
+
+    private void handleRequest() {
+        System.out.println("Start handleRequest");
+
+        while(true) {
+            System.out.println("handleRequest");
+            Object receivedCommand = serverSocketConnection.readObject();
             if ((receivedCommand != null) && receivedCommand.equals("getFondsen")) {
                 System.out.println("getFondsen command received.");
                 if (serverSocketConnection.writeObject(fondsen)) {
