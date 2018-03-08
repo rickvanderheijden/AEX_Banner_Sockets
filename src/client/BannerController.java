@@ -1,6 +1,8 @@
 package client;
 
+import shared.request.RequestFonds;
 import shared.interfaces.IFonds;
+import shared.interfaces.IRequest;
 import shared.sockets.ObjectInputConnection;
 import shared.sockets.ObjectOutputConnection;
 
@@ -8,10 +10,7 @@ import java.io.*;
 import java.net.Socket;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 
 class BannerController extends UnicastRemoteObject {
 
@@ -33,12 +32,30 @@ class BannerController extends UnicastRemoteObject {
     public void stop() {
         pollingTimer.cancel();
         pollingTimer.purge();
+
+        try{
+            socket.close();
+        } catch (IOException e) {
+            System.out.println("Could not close socket");
+        }
     }
 
     private void updateBanner() {
         List<IFonds> fondsen;
-        String command = "getFondsen";
-        objectOutputConnection.writeObject(command);
+
+        //Uncomment to request 1 fonds
+        IRequest request = new RequestFonds("Philips");
+
+        //Uncomment to request 2 fondsen
+        //List<String> fondsenToRequest = new ArrayList<String>();
+        //fondsenToRequest.add("Aegon");
+        //fondsenToRequest.add("Philips");
+        //IRequest request = new RequestFondsen(fondsenToRequest);
+
+        //Uncomment to request all fondsen
+        //IRequest request = new RequestAllFondsen();
+
+        objectOutputConnection.writeObject(request);
         Object result = objectInputConnection.readObject();
         fondsen = (ArrayList<IFonds>) result;
 

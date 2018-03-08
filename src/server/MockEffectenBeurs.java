@@ -74,13 +74,11 @@ public class MockEffectenBeurs extends UnicastRemoteObject implements IEffectenB
 
         while (waitForConnection) {
             try {
-                Thread t = new Thread(new RequestHandler(serverSocket.accept(), getKoersen()));
-                t.start();
+                Thread requestHandlerThread = new Thread(new RequestHandler(serverSocket.accept(), getKoersen()));
+                requestHandlerThread.start();
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
-
         }
     }
 }

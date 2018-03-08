@@ -7,9 +7,11 @@ import java.net.Socket;
 
 public class ObjectInputConnection {
 
+    private final Socket socket;
     private ObjectInputStream objectInputStream = null;
 
     public ObjectInputConnection(Socket socket) {
+        this.socket = socket;
 
         InputStream inputStream = null;
         if (socket != null) {
@@ -17,6 +19,7 @@ public class ObjectInputConnection {
                 inputStream = socket.getInputStream();
             } catch (IOException e) {
                 System.err.println("Failed to create input stream.");
+                closeSocket();
             }
         }
 
@@ -25,6 +28,7 @@ public class ObjectInputConnection {
                 objectInputStream = new ObjectInputStream(inputStream);
             } catch (IOException e) {
                 System.err.println("Failed to create object input stream.");
+                closeSocket();
             }
         }
     }
@@ -35,10 +39,19 @@ public class ObjectInputConnection {
             try {
                 result = objectInputStream.readObject();
             } catch (IOException | ClassNotFoundException e) {
-                e.printStackTrace();
+                System.err.println("Failed to read object from input stream.");
+                closeSocket();
             }
         }
 
         return result;
+    }
+
+    private void closeSocket() {
+        try {
+            socket.close();
+        } catch (IOException e) {
+            System.err.println("Failed to close socket.");
+        }
     }
 }
