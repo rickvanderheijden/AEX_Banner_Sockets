@@ -43,7 +43,6 @@ public class AEXBannerClient extends Application {
         primaryStage.show();
         primaryStage.toFront();
 
-
         // Start animation: text moves from right to left
         animationTimer = new AnimationTimer() {
             private long prevUpdate;

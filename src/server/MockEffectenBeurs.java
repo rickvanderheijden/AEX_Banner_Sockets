@@ -4,6 +4,8 @@ import shared.Fonds;
 import shared.interfaces.IEffectenBeurs;
 import shared.interfaces.IFonds;
 
+import java.io.IOException;
+import java.net.ServerSocket;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
@@ -14,7 +16,7 @@ public class MockEffectenBeurs extends UnicastRemoteObject implements IEffectenB
 
     private List<IFonds> fondsen;
     private final Random random = new Random();
-    private ServerSocketConnection serverSocketConnection = null;
+    private ServerSocket serverSocket = null;
     private final Timer updateTimer = new Timer();
 
     public MockEffectenBeurs() throws RemoteException {
@@ -25,14 +27,21 @@ public class MockEffectenBeurs extends UnicastRemoteObject implements IEffectenB
         handleRequests();
     }
 
+    private void addFondsen() {
+        fondsen = new ArrayList<>();
+        fondsen.add(new Fonds("Aegon", 5.618));
+        fondsen.add(new Fonds("KPN", 2.633));
+        fondsen.add(new Fonds("Philips", 31.500));
+        fondsen.add(new Fonds("Randstad", 58.360));
+        fondsen.add(new Fonds("Unilever", 43.485));
+    }
+
     @Override
     public List<IFonds> getKoersen() {
         return fondsen;
     }
 
     private void updateKoersen() {
-        //System.out.println("Update koersen");
-
         for (IFonds fonds : fondsen) {
             boolean add = random.nextBoolean();
             double koers = fonds.getKoers();
@@ -41,15 +50,6 @@ public class MockEffectenBeurs extends UnicastRemoteObject implements IEffectenB
             Fonds f = (Fonds) fonds;
             f.setKoers(nieuweKoers);
         }
-    }
-
-    private void addFondsen() {
-        fondsen = new ArrayList<>();
-        fondsen.add(new Fonds("Aegon", 5.618));
-        fondsen.add(new Fonds("KPN", 2.633));
-        fondsen.add(new Fonds("Philips", 31.500));
-        fondsen.add(new Fonds("Randstad", 58.360));
-        fondsen.add(new Fonds("Unilever", 43.485));
     }
 
     private void setTimer() {
@@ -62,39 +62,25 @@ public class MockEffectenBeurs extends UnicastRemoteObject implements IEffectenB
     }
 
     private void createSockets() {
-        serverSocketConnection = new ServerSocketConnection();
+        try {
+            serverSocket = new ServerSocket(8189);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private void handleRequests() {
         boolean waitForConnection = true;
 
         while (waitForConnection) {
-            serverSocketConnection.accept();
-
-            Runnable task2 = () -> {
-                handleRequest();
-            };
-
-            Thread t = new Thread(task2);
-            t.start();
-        }
-    }
-
-    private void handleRequest() {
-        System.out.println("Start handleRequest");
-
-        while(true) {
-            System.out.println("handleRequest");
-            Object receivedCommand = serverSocketConnection.readObject();
-            if ((receivedCommand != null) && receivedCommand.equals("getFondsen")) {
-                System.out.println("getFondsen command received.");
-                if (serverSocketConnection.writeObject(fondsen)) {
-                    System.out.println("Sent: " + fondsen.get(0).getKoers());
-                    System.out.println("Fondsen sent.");
-                } else {
-                    System.err.println("Unable to send fondsen.");
-                }
+            try {
+                Thread t = new Thread(new RequestHandler(serverSocket.accept(), getKoersen()));
+                t.start();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
+
+
         }
     }
 }

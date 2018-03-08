@@ -4,6 +4,7 @@ import shared.interfaces.IEffectenBeurs;
 
 import java.rmi.RemoteException;
 
+@SuppressWarnings("unused")
 class AEXBannerServer {
     public static void main(String[] args) throws RemoteException {
 

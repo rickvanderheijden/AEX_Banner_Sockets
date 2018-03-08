@@ -7,11 +7,11 @@ import java.net.Socket;
 
 public class ObjectInputConnection {
 
-    private InputStream inputStream = null;
     private ObjectInputStream objectInputStream = null;
 
     public ObjectInputConnection(Socket socket) {
 
+        InputStream inputStream = null;
         if (socket != null) {
             try {
                 inputStream = socket.getInputStream();
@@ -34,9 +34,7 @@ public class ObjectInputConnection {
         if (objectInputStream != null) {
             try {
                 result = objectInputStream.readObject();
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (ClassNotFoundException e) {
+            } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace();
             }
         }

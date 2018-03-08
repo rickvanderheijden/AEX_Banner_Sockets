@@ -5,10 +5,10 @@ import java.net.Socket;
 
 public class ObjectOutputConnection {
 
-    private OutputStream outputStream = null;
     private ObjectOutputStream objectOutputStream = null;
     public ObjectOutputConnection(Socket socket) {
 
+        OutputStream outputStream = null;
         if (socket != null) {
             try {
                 outputStream = socket.getOutputStream();

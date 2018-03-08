@@ -1,6 +1,8 @@
 package client;
 
 import shared.interfaces.IFonds;
+import shared.sockets.ObjectInputConnection;
+import shared.sockets.ObjectOutputConnection;
 
 import java.io.*;
 import java.net.Socket;
@@ -18,15 +20,14 @@ class BannerController extends UnicastRemoteObject {
     private final client.AEXBannerClient banner;
     private final Timer pollingTimer = new Timer();
     private Socket socket = null;
-    private OutputStream outputStream = null;
-    private InputStream inputStream = null;
-    private ObjectOutputStream objectOutputStream = null;
-    private ObjectInputStream objectInputStream = null;
+    private ObjectOutputConnection objectOutputConnection = null;
+    private ObjectInputConnection objectInputConnection = null;
 
     public BannerController(client.AEXBannerClient banner) throws RemoteException {
         this.banner = banner;
-        createSockets();
-        startPollingTimer();
+        if (createConnections()) {
+            startPollingTimer();
+        }
     }
 
     public void stop() {
@@ -35,22 +36,11 @@ class BannerController extends UnicastRemoteObject {
     }
 
     private void updateBanner() {
-        System.out.println("Update banner");
-        List<IFonds> fondsen = null;
+        List<IFonds> fondsen;
         String command = "getFondsen";
-
-        try {
-            System.out.println("getFondsen command sent.");
-            objectOutputStream.writeObject(command);
-            objectOutputStream.flush();
-            Object result = objectInputStream.readObject();
-            fondsen = (ArrayList<IFonds>) result;
-            System.out.println("fondsen received.");
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
-            System.err.println("Unknown object type used.");
-        }
+        objectOutputConnection.writeObject(command);
+        Object result = objectInputConnection.readObject();
+        fondsen = (ArrayList<IFonds>) result;
 
         if (fondsen != null && fondsen.size() > 0) {
             StringBuilder fondsenString = new StringBuilder();
@@ -63,12 +53,27 @@ class BannerController extends UnicastRemoteObject {
                 fondsenString.append(DIVIDER);
             }
 
-            System.out.println("setKoersen");
             banner.setKoersen(fondsenString.toString());
         }
     }
 
-    private boolean createSockets() {
+    private boolean createConnections()
+    {
+        if (createSocket()) {
+            objectInputConnection = new ObjectInputConnection(socket);
+            objectOutputConnection = new ObjectOutputConnection(socket);
+        }
+
+        boolean result = (objectInputConnection != null) && (objectOutputConnection != null);
+
+        if (!result) {
+            System.err.println("Failed to create connections.");
+        }
+
+        return result;
+    }
+
+    private boolean createSocket() {
         boolean result = true;
 
         try {
@@ -76,42 +81,6 @@ class BannerController extends UnicastRemoteObject {
         } catch (IOException e) {
             System.err.println("Failed to create client socket.");
             result = false;
-        }
-
-        if (result) {
-            try {
-                inputStream = socket.getInputStream();
-            } catch (IOException e) {
-                System.err.println("Failed to create input stream.");
-                result = false;
-            }
-        }
-
-        if (result) {
-            try {
-                objectInputStream = new ObjectInputStream(inputStream);
-            } catch (IOException e) {
-                System.err.println("Failed to create object input stream.");
-                result = false;
-            }
-        }
-
-        if (result) {
-            try {
-                outputStream = socket.getOutputStream();
-            } catch (IOException e) {
-                System.err.println("Failed to create output stream.");
-                result = false;
-            }
-        }
-
-        if (result) {
-            try {
-                objectOutputStream = new ObjectOutputStream(outputStream);
-            } catch (IOException e) {
-                System.err.println("Failed to create object output stream.");
-                result = false;
-            }
         }
 
         return result;
