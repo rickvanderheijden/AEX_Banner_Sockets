@@ -1,8 +1,10 @@
 package client;
 
+import shared.request.RequestAllFondsen;
 import shared.request.RequestFonds;
 import shared.interfaces.IFonds;
 import shared.interfaces.IRequest;
+import shared.request.RequestFondsen;
 import shared.sockets.ObjectInputConnection;
 import shared.sockets.ObjectOutputConnection;
 
@@ -21,6 +23,7 @@ class BannerController extends UnicastRemoteObject {
     private Socket socket = null;
     private ObjectOutputConnection objectOutputConnection = null;
     private ObjectInputConnection objectInputConnection = null;
+    private RequestType requestType = RequestType.REQUEST_ALL;
 
     public BannerController(client.AEXBannerClient banner) throws RemoteException {
         this.banner = banner;
@@ -42,18 +45,25 @@ class BannerController extends UnicastRemoteObject {
 
     private void updateBanner() {
         List<IFonds> fondsen;
+        IRequest request = null;
 
-        //Uncomment to request 1 fonds
-        IRequest request = new RequestFonds("Philips");
-
-        //Uncomment to request 2 fondsen
-        //List<String> fondsenToRequest = new ArrayList<String>();
-        //fondsenToRequest.add("Aegon");
-        //fondsenToRequest.add("Philips");
-        //IRequest request = new RequestFondsen(fondsenToRequest);
-
-        //Uncomment to request all fondsen
-        //IRequest request = new RequestAllFondsen();
+        switch (requestType) {
+            case REQUEST_ALL:
+                request = new RequestAllFondsen();
+                banner.setText("Alle fondsen worden getoond");
+                break;
+            case REQUEST_FEW:
+                List<String> fondsenToRequest = new ArrayList<>();
+                fondsenToRequest.add("Aegon");
+                fondsenToRequest.add("Philips");
+                request = new RequestFondsen(fondsenToRequest);
+                banner.setText("Alleen Aegon en Philips worden getoond");
+                break;
+            case REQUEST_ONE:
+                request = new RequestFonds("Randstad");
+                banner.setText("Alleen Randstad wordt getoond");
+                break;
+        }
 
         objectOutputConnection.writeObject(request);
         Object result = objectInputConnection.readObject();
@@ -110,5 +120,19 @@ class BannerController extends UnicastRemoteObject {
                 updateBanner();
             }
         }, 0, UPDATE_TIME);
+    }
+
+    public void toggleRequestType() {
+        switch (requestType) {
+            case REQUEST_ALL:
+                requestType = RequestType.REQUEST_FEW;
+                break;
+            case REQUEST_FEW:
+                requestType = RequestType.REQUEST_ONE;
+                break;
+            case REQUEST_ONE:
+                requestType = RequestType.REQUEST_ALL;
+                break;
+        }
     }
 }

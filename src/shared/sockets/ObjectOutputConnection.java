@@ -29,7 +29,7 @@ public class ObjectOutputConnection {
     }
 
     public void writeObject(Object object) {
-        if (objectOutputStream != null) {
+        if (objectOutputStream != null && object != null) {
             try {
                 objectOutputStream.reset(); // Needed to prevent caching!
                 objectOutputStream.writeObject(object);
